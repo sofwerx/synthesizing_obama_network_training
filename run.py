@@ -8,6 +8,9 @@ import random
 import platform
 import bisect
 import numpy as np
+from tensorflow.contrib import *
+from tensorflow.contrib.legacy_seq2seq import *
+from tensorflow.contrib.rnn import *
 
 
 class Speech(TFBase):
@@ -108,15 +111,15 @@ class Speech(TFBase):
       args.batch_size = 1
       args.seq_length = 1
 
-    cell_fn = tf.nn.rnn_cell.LSTMCell
+    cell_fn = LSTMCell
     cell = cell_fn(args.rnn_size, state_is_tuple=True)
 
     if infer == False and args.keep_prob < 1: # training mode
       cell0 = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob = args.keep_prob)
       cell1 = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob = args.keep_prob, output_keep_prob = args.keep_prob)
-      self.network = tf.nn.rnn_cell.MultiRNNCell([cell0] * (args.num_layers -1) + [cell1], state_is_tuple=True)
+      self.network = MultiRNNCell([cell0] * (args.num_layers -1) + [cell1], state_is_tuple=True)
     else:
-      self.network = tf.nn.rnn_cell.MultiRNNCell([cell] * args.num_layers, state_is_tuple=True)
+      self.network = MultiRNNCell([cell] * args.num_layers, state_is_tuple=True)
 
 
     self.input_data = tf.placeholder(dtype=tf.float32, shape=[None, args.seq_length, self.dimin])
@@ -127,12 +130,12 @@ class Speech(TFBase):
       output_w = tf.get_variable("output_w", [args.rnn_size, self.dimout])
       output_b = tf.get_variable("output_b", [self.dimout])
 
-    inputs = tf.split(1, args.seq_length, self.input_data)
+    inputs = tf.split(self.input_data, args.seq_length, 1)
     inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
 
-    outputs, states = tf.nn.seq2seq.rnn_decoder(inputs, self.initial_state, self.network, loop_function=None, scope='rnnlm')
+    outputs, states = rnn_decoder(inputs, self.initial_state, self.network, loop_function=None, scope='rnnlm')
 
-    output = tf.reshape(tf.concat(1, outputs), [-1, args.rnn_size])
+    output = tf.reshape(tf.concat(outputs, 1), [-1, args.rnn_size])
     output = tf.nn.xw_plus_b(output, output_w, output_b)
     self.final_state = states
     self.output = output
