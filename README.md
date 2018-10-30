@@ -3,7 +3,7 @@ This is research-code for
 Supasorn Suwajanakorn, Steven M. Seitz, Ira Kemelmacher-Shlizerman<br>
 SIGGRAPH 2017
 
-Code tested using tensorflow 0.11.0
+Code tested using tensorflow 1.1.0
 Please see [Supasorn's website](http://homes.cs.washington.edu/~supasorn/?page=code) for the overview.
 
 To generate MFCC, first normalize the input audio using https://github.com/slhck/ffmpeg-normalize. Then use [Sphinx III's snippet](http://www.cs.cmu.edu/~dhuggins/Projects/pyphone/sphinx/mfcc.py) by David Huggins-Daines with a modified routine that saves log energy and timestamps:
